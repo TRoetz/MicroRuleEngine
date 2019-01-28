@@ -46,7 +46,15 @@ namespace MicroRuleEngine
 			return Expression.Lambda<Func<T, bool>>(expr, paramUser).Compile();
 		}
 
-		public Func<object, bool> CompileRule(Type type, Rule r)
+	    public Expression<Func<T, bool>> RuleExpression<T>(Rule r)
+	    {
+	        var        paramUser = Expression.Parameter(typeof(T));
+	        Expression expr      = GetExpressionForRule(typeof(T), r, paramUser);
+
+	        return Expression.Lambda<Func<T, bool>>(expr, paramUser);
+	    }
+
+        public Func<object, bool> CompileRule(Type type, Rule r)
 		{
 			var paramUser = Expression.Parameter(typeof(object));
 			Expression expr = GetExpressionForRule(type, r, paramUser);
@@ -222,10 +230,12 @@ namespace MicroRuleEngine
 				propType = propExpression.Type;
 			}
 
-			propExpression = Expression.TryCatch(
-				Expression.Block(propExpression.Type, propExpression),
-				Expression.Catch(typeof(NullReferenceException), Expression.Default(propExpression.Type))
-			);
+            //This caused issues passing the expression to EF.
+            //With out this it lets us use the rules to build complex where clauses for EF queries.
+			//propExpression = Expression.TryCatch(
+			//	Expression.Block(propExpression.Type, propExpression),
+			//	Expression.Catch(typeof(NullReferenceException), Expression.Default(propExpression.Type))
+			//);
 			// is the operator a known .NET operator?
 			ExpressionType tBinary;
 
